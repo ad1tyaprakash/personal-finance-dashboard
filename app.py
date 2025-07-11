@@ -3,20 +3,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = "your_super_secret_key"  # Required for sessions
+app.secret_key = "your_super_secret_key"  
 
-# Connect to SQLite database
+
 def get_db_connection():
     conn = sqlite3.connect("finance.db")
     conn.row_factory = sqlite3.Row
     return conn
 
-# Homepage
 @app.route("/")
 def index():
     return render_template("index.html", active_page="home")
 
-# Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -42,7 +40,6 @@ def register():
 
     return render_template("register.html", active_page="register")
 
-# Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     session.clear()
@@ -65,20 +62,17 @@ def login():
 
     return render_template("login.html", active_page="login")
 
-# Dashboard
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
         return redirect("/login")
     return render_template("dashboard.html", active_page="dashboard", username=session.get("username"))
 
-# Logout
 @app.route("/logout")
 def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect("/")
 
-# Run
 if __name__ == "__main__":
     app.run(debug=True)
