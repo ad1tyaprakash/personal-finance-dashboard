@@ -1,1 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
 
+{% block content %}
+<div class="container mt-5">
+  <h2>Welcome, {{ username }}</h2>
+
+  <!-- Expenses Table -->
+  <div class="my-4">
+    <h4>Your Expenses</h4>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in range(labels|length) %}
+        <tr>
+          <td>{{ labels[i] }}</td>
+          <td>₹ {{ data[i] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Expense Chart -->
+  <div class="my-4">
+    <h4>Expense Breakdown</h4>
+    <canvas id="expenseChart" width="400" height="400"></canvas>
+  </div>
+</div>
+
+<!-- Chart.js & Custom Chart Logic -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='chart.js') }}"></script>
+<script>
+  const labels = {{ labels|tojson }};
+  const data = {{ data|tojson }};
+  renderExpenseChart(labels, data);
+</script>
+{% endblock %}
