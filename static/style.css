@@ -1,12 +1,95 @@
+/* ===== Base Reset ===== */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== Navbar ===== */
+.navbar-brand strong {
+  font-size: 1.3rem;
+}
+
+.navbar a.btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.navbar a.btn:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}
+
+/* ===== White Card (Homepage Centerpiece) ===== */
+.card {
+  border-radius: 1.25rem;
+  background-color: #ffffff;
+}
+
+/* ===== Background Section Below Card ===== */
 .bg-section {
   height: 300px;
   background: url('/static/your-bg.jpg') no-repeat center center/cover;
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bg-overlay-text {
   background-color: rgba(0, 0, 0, 0.5);
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   border-radius: 12px;
+  color: #fff;
+  max-width: 700px;
+  text-align: center;
+}
+
+/* ===== Buttons ===== */
+.btn-lg {
+  border-radius: 8px;
+}
+
+.btn-success,
+.btn-outline-primary,
+.btn-outline-light,
+.btn-danger {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-success:hover,
+.btn-outline-primary:hover,
+.btn-outline-light:hover,
+.btn-danger:hover {
+  transform: scale(1.03);
+  opacity: 0.95;
+}
+
+/* ===== Flash messages (optional) ===== */
+.alert {
+  margin-top: 1rem;
+}
+
+/* ===== Responsive tweaks ===== */
+@media (max-width: 576px) {
+  .card {
+    padding: 1.5rem;
+  }
+
+  .bg-section {
+    height: 200px;
+  }
+
+  .bg-overlay-text {
+    font-size: 0.95rem;
+    padding: 1rem;
+  }
+}
+
+/* ===== Optional Footer ===== */
+footer {
+  padding: 1rem 0;
+  background-color: #343a40;
+  color: white;
+  text-align: center;
+  margin-top: 3rem;
 }
