@@ -74,6 +74,22 @@ def logout():
     flash("You have been logged out.", "info")
     return redirect("/")
 
+@app.route("/add_stock", methods=["POST"])
+@login_required
+def add_stock():
+    symbol = request.form["symbol"].upper()
+    shares = int(request.form["shares"])
+    buy_price = float(request.form["buy_price"])
+
+    conn = get_db_connection()
+    conn.execute("INSERT INTO stocks (user_id, symbol, shares, buy_price) VALUES (?, ?, ?, ?)",
+                 (session["user_id"], symbol, shares, buy_price))
+    conn.commit()
+    conn.close()
+
+    flash(f"Added {shares} shares of {symbol}", "success")
+    return redirect("/dashboard")
+
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))  
