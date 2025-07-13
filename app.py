@@ -155,7 +155,7 @@ def add_stock():
     buy_price = float(request.form["buy_price"])
 
     conn = get_db_connection()
-    conn.execute("INSERT INTO stocks (user_id, symbol, quantity, purchase_price) VALUES (?, ?, ?, ?)",
+    conn.execute("INSERT INTO stocks (user_id, ticker, shares, buy_price) VALUES (?, ?, ?, ?)",
              (session["user_id"], symbol, shares, buy_price))
     conn.commit()
     conn.close()
