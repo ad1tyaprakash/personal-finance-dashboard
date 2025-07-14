@@ -21,7 +21,9 @@
   <!-- ===== Net Worth Pie Chart ===== -->
   <div class="my-4">
     <h4>Net Worth Breakdown</h4>
-    <canvas id="netWorthChart" width="400" height="200"></canvas>
+    <div class="chart-container">
+      <canvas id="netWorthChart"></canvas>
+    </div>
   </div>
 
   <!-- ===== Add Income Form ===== -->
@@ -85,7 +87,9 @@
   <!-- ===== Expense Breakdown Chart ===== -->
   <div class="my-5">
     <h4>Expense Breakdown</h4>
-    <canvas id="expenseChart" width="400" height="200"></canvas>
+    <div class="chart-container">
+      <canvas id="expenseChart"></canvas>
+    </div>
   </div>
 
   <!-- ===== Stocks Section ===== -->
@@ -149,7 +153,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='chart.js') }}"></script>
 <script>
-  // Run chart functions from chart.js
   renderExpenseChart({{ labels | tojson }}, {{ data | tojson }});
   renderNetWorthChart({{ net_worth }}, {{ total_savings }});
 </script>
