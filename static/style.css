@@ -93,3 +93,15 @@ footer {
   text-align: center;
   margin-top: 3rem;
 }
+
+/* ===== Chart Container Styling ===== */
+.chart-container {
+  max-width: 500px;
+  height: 300px;
+  margin: 0 auto 2rem auto; /* center the chart with margin below */
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
