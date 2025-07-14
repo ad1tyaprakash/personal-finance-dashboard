@@ -83,6 +83,11 @@ body {
     font-size: 0.95rem;
     padding: 1rem;
   }
+
+  .chart-container {
+    max-width: 320px;
+    height: auto;
+  }
 }
 
 /* ===== Optional Footer ===== */
@@ -96,12 +101,12 @@ footer {
 
 /* ===== Chart Container Styling ===== */
 .chart-container {
-  max-width: 500px;
-  height: 300px;
-  margin: 0 auto 2rem auto; /* center the chart with margin below */
+  max-width: 480px;
+  height: auto;
+  margin: 0 auto 2rem auto;
 }
 
 canvas {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
 }
