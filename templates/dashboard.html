@@ -119,7 +119,7 @@
     </table>
   </div>
 
-  <!-- ===== Add Stock ===== -->
+  <!-- ===== Add Stock Form ===== -->
   <h4 class="mt-5">Add Stock</h4>
   <form action="/add_stock" method="POST" class="row g-3 mb-5">
     <div class="col-md-4">
@@ -147,33 +147,10 @@
 
 <!-- ===== Scripts ===== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='chart.js') }}"></script>
 <script>
-  // Expense Chart
-  const expenseLabels = {{ labels | tojson }};
-  const expenseData = {{ data | tojson }};
-  new Chart(document.getElementById('expenseChart').getContext('2d'), {
-    type: 'pie',
-    data: {
-      labels: expenseLabels,
-      datasets: [{
-        data: expenseData,
-        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2', '#fd7e14']
-      }]
-    }
-  });
-
-  // Net Worth Chart
-  const netLabels = ['Stocks', 'Savings'];
-  const netData = [{{ net_worth }}, {{ total_savings }}];
-  new Chart(document.getElementById('netWorthChart').getContext('2d'), {
-    type: 'pie',
-    data: {
-      labels: netLabels,
-      datasets: [{
-        data: netData,
-        backgroundColor: ['#17a2b8', '#20c997']
-      }]
-    }
-  });
+  // Run chart functions from chart.js
+  renderExpenseChart({{ labels | tojson }}, {{ data | tojson }});
+  renderNetWorthChart({{ net_worth }}, {{ total_savings }});
 </script>
 {% endblock %}
