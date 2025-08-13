@@ -189,6 +189,10 @@ def add_savings():
     flash("Savings added.", "primary")
     return redirect("/dashboard")
 
+@app.route("/view_profile", methods=["POST"])
+@login_required
+def view_profile() :
+    
 @app.route("/logout")
 def logout():
     session.clear()
