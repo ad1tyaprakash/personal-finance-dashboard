@@ -88,7 +88,6 @@ def login():
 def dashboard():
     conn = get_db_connection()
 
-    # Expenses
     expenses = conn.execute(
         "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category",
         (session["user_id"],)
@@ -96,15 +95,12 @@ def dashboard():
     labels = [row["category"] for row in expenses]
     data = [row["total"] for row in expenses]
 
-    # Total income & total expense
     total_income = conn.execute("SELECT SUM(amount) FROM income WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
     total_expense = conn.execute("SELECT SUM(amount) FROM expenses WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
     deficit = round(total_income - total_expense, 2)
 
-    # Savings
     total_savings = conn.execute("SELECT SUM(amount) FROM savings WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
 
-    # Stocks
     stocks = conn.execute("SELECT * FROM stocks WHERE user_id = ?", (session["user_id"],)).fetchall()
     total_stock_value = 0
     stock_data = []
