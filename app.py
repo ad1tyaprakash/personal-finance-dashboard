@@ -1,52 +1,13 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3
-import yfinance as yf
 import os
-from functools import wraps
 from datetime import datetime
+from sqlalchemy import text
+
+from helpers import db, get_db_session, login_required, get_user_by_id, get_current_price, fetch_popular_stocks
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_super_secret_key")
-
-def get_db_connection():
-    conn = sqlite3.connect("finance.db", detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("user_id") is None:
-            return redirect("/login")
-        return f(*args, **kwargs)
-    return decorated_function
-
-def get_current_price(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        price = stock.info.get("regularMarketPrice")
-        if price is None:
-            # fallback to history
-            hist = stock.history(period="1d")
-            if not hist.empty:
-                price = hist["Close"].iloc[-1]
-        return round(float(price), 2) if price is not None else None
-    except Exception:
-        return None
-
-def fetch_popular_stocks():
-    symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NFLX", "NVDA", "META", "INTC", "ADBE"]
-    dropdown_options = []
-    for symbol in symbols:
-        name = symbol
-        try:
-            stock = yf.Ticker(symbol)
-            name = stock.info.get("shortName") or symbol
-        except Exception:
-            pass
-        dropdown_options.append((symbol, name))
-    return dropdown_options
 
 @app.route("/")
 def index():
@@ -60,16 +21,15 @@ def register():
         if not username or not password:
             flash("Username and password are required!", "danger")
             return redirect("/register")
-        conn = get_db_connection()
-        existing_user = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+        s = get_db_session()
+        existing_user = s.execute(text("SELECT id FROM users WHERE username = :username"), {"username": username}).fetchone()
         if existing_user:
-            conn.close()
             flash("Username already exists.", "warning")
             return redirect("/register")
         hash_pw = generate_password_hash(password)
-        conn.execute("INSERT INTO users (username, hash) VALUES (?, ?)", (username, hash_pw))
-        conn.commit()
-        conn.close()
+        s.execute(text("INSERT INTO users (username, hash) VALUES (:username, :hash)"),
+                  {"username": username, "hash": hash_pw})
+        s.commit()
         flash("Registered successfully. Please log in.", "success")
         return redirect("/login")
     return render_template("register.html", active_page="register")
@@ -80,9 +40,8 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "")
         password = request.form.get("password", "")
-        conn = get_db_connection()
-        user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
-        conn.close()
+        s = get_db_session()
+        user = s.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
         if user is None or not check_password_hash(user["hash"], password):
             flash("Invalid username or password.", "danger")
             return redirect("/login")
@@ -101,22 +60,18 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    conn = get_db_connection()
-    # expenses by category
-    expenses = conn.execute(
-        "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category",
-        (session["user_id"],)
-    ).fetchall()
+    s = get_db_session()
+    expenses = s.execute(text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"), {"uid": session["user_id"]}).fetchall()
     labels = [row["category"] for row in expenses]
     data = [row["total"] for row in expenses]
 
-    total_income = conn.execute("SELECT SUM(amount) FROM income WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
-    total_expense = conn.execute("SELECT SUM(amount) FROM expenses WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
+    total_income = s.execute(text("SELECT SUM(amount) FROM income WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
+    total_expense = s.execute(text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
     deficit = round(total_income - total_expense, 2)
 
-    total_savings = conn.execute("SELECT SUM(amount) FROM savings WHERE user_id = ?", (session["user_id"],)).fetchone()[0] or 0
+    total_savings = s.execute(text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
 
-    stocks = conn.execute("SELECT * FROM stocks WHERE user_id = ?", (session["user_id"],)).fetchall()
+    stocks = s.execute(text("SELECT * FROM stocks WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
     total_stock_value = 0
     stock_data = []
     for stock in stocks:
@@ -135,9 +90,8 @@ def dashboard():
 
     total_net_worth = round(total_savings + total_stock_value, 2)
 
-    conn.close()
     return render_template("dashboard.html",
-        username=session["username"],
+        username=session.get("username"),
         labels=labels,
         data=data,
         stock_data=stock_data,
@@ -153,17 +107,16 @@ def dashboard():
 @app.route("/watchlist", methods=["GET", "POST"])
 @login_required
 def watchlist():
-    conn = get_db_connection()
+    s = get_db_session()
     if request.method == "POST":
         ticker = request.form.get("ticker", "").upper().strip()
         if ticker:
-            conn.execute("INSERT INTO watchlist (user_id, ticker) VALUES (?, ?)", (session["user_id"], ticker))
-            conn.commit()
+            s.execute(text("INSERT INTO watchlist (user_id, ticker) VALUES (:uid, :ticker)"),
+                      {"uid": session["user_id"], "ticker": ticker})
+            s.commit()
             flash(f"Added {ticker} to watchlist", "success")
         return redirect("/watchlist")
-    items = conn.execute("SELECT * FROM watchlist WHERE user_id = ?", (session["user_id"],)).fetchall()
-    conn.close()
-    # resolve current prices
+    items = s.execute(text("SELECT * FROM watchlist WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
     resolved = []
     for it in items:
         price = get_current_price(it["ticker"]) or "N/A"
@@ -173,10 +126,9 @@ def watchlist():
 @app.route("/watchlist/remove/<int:item_id>", methods=["POST"])
 @login_required
 def remove_watchlist(item_id):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM watchlist WHERE id = ? AND user_id = ?", (item_id, session["user_id"]))
-    conn.commit()
-    conn.close()
+    s = get_db_session()
+    s.execute(text("DELETE FROM watchlist WHERE id = :id AND user_id = :uid"), {"id": item_id, "uid": session["user_id"]})
+    s.commit()
     flash("Removed from watchlist", "info")
     return redirect("/watchlist")
 
@@ -184,31 +136,27 @@ def remove_watchlist(item_id):
 @app.route("/debts", methods=["GET", "POST"])
 @login_required
 def debts():
-    conn = get_db_connection()
+    s = get_db_session()
     if request.method == "POST":
         creditor = request.form.get("creditor")
         amount = float(request.form.get("amount") or 0)
         interest = float(request.form.get("interest") or 0)
         monthly = float(request.form.get("monthly_payment") or 0)
         due_date = request.form.get("due_date") or None
-        conn.execute(
-            "INSERT INTO debts (user_id, creditor, amount, interest_rate, monthly_payment, due_date) VALUES (?, ?, ?, ?, ?, ?)",
-            (session["user_id"], creditor, amount, interest, monthly, due_date)
-        )
-        conn.commit()
+        s.execute(text("INSERT INTO debts (user_id, creditor, amount, interest_rate, monthly_payment, due_date) VALUES (:uid, :creditor, :amount, :interest, :monthly, :due)"),
+                  {"uid": session["user_id"], "creditor": creditor, "amount": amount, "interest": interest, "monthly": monthly, "due": due_date})
+        s.commit()
         flash("Debt added.", "success")
         return redirect("/debts")
-    rows = conn.execute("SELECT * FROM debts WHERE user_id = ?", (session["user_id"],)).fetchall()
-    conn.close()
+    rows = s.execute(text("SELECT * FROM debts WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
     return render_template("debts.html", debts=rows, active_page="debts")
 
 @app.route("/debts/remove/<int:debt_id>", methods=["POST"])
 @login_required
 def remove_debt(debt_id):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM debts WHERE id = ? AND user_id = ?", (debt_id, session["user_id"]))
-    conn.commit()
-    conn.close()
+    s = get_db_session()
+    s.execute(text("DELETE FROM debts WHERE id = :id AND user_id = :uid"), {"id": debt_id, "uid": session["user_id"]})
+    s.commit()
     flash("Debt removed.", "info")
     return redirect("/debts")
 
@@ -216,29 +164,27 @@ def remove_debt(debt_id):
 @app.route("/transactions", methods=["GET", "POST"])
 @login_required
 def transactions():
-    conn = get_db_connection()
+    s = get_db_session()
     if request.method == "POST":
         t_type = request.form.get("type")
         amount = float(request.form.get("amount") or 0)
         description = request.form.get("description")
         date = request.form.get("date") or datetime.utcnow().strftime("%Y-%m-%d")
-        conn.execute("INSERT INTO transactions (user_id, type, amount, description, date) VALUES (?, ?, ?, ?, ?)",
-                     (session["user_id"], t_type, amount, description, date))
-        conn.commit()
+        s.execute(text("INSERT INTO transactions (user_id, type, amount, description, date) VALUES (:uid, :type, :amount, :desc, :date)"),
+                  {"uid": session["user_id"], "type": t_type, "amount": amount, "desc": description, "date": date})
+        s.commit()
         flash("Transaction logged.", "success")
         return redirect("/transactions")
-    # optional filtering
     start = request.args.get("start")
     end = request.args.get("end")
-    q = "SELECT * FROM transactions WHERE user_id = ?"
-    params = [session["user_id"]]
+    q = "SELECT * FROM transactions WHERE user_id = :uid"
+    params = {"uid": session["user_id"]}
     if start:
-        q += " AND date >= ?"; params.append(start)
+        q += " AND date >= :start"; params["start"] = start
     if end:
-        q += " AND date <= ?"; params.append(end)
+        q += " AND date <= :end"; params["end"] = end
     q += " ORDER BY date DESC"
-    rows = conn.execute(q, tuple(params)).fetchall()
-    conn.close()
+    rows = s.execute(text(q), params).fetchall()
     return render_template("transactions.html", transactions=rows, active_page="transactions")
 
 # API: get price for ticker (ajax)
@@ -253,17 +199,16 @@ def api_price():
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    conn = get_db_connection()
-    user = conn.execute("SELECT id, username FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+    s = get_db_session()
+    user = s.execute(text("SELECT id, username FROM users WHERE id = :id"), {"id": session["user_id"]}).fetchone()
     if request.method == "POST":
         newname = request.form.get("username").strip()
         if newname:
-            conn.execute("UPDATE users SET username = ? WHERE id = ?", (newname, session["user_id"]))
-            conn.commit()
+            s.execute(text("UPDATE users SET username = :username WHERE id = :id"), {"username": newname, "id": session["user_id"]})
+            s.commit()
             session["username"] = newname
             flash("Profile updated.", "success")
             return redirect("/profile")
-    conn.close()
     return render_template("profile.html", user=user, active_page="profile")
 
 if __name__ == "__main__":

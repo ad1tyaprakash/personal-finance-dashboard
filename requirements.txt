@@ -2,3 +2,5 @@ Flask
 Werkzeug
 requests
 yfinance
+SQLAlchemy
+psycopg2-binary

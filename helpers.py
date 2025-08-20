@@ -1,13 +1,24 @@
 from functools import wraps
 from flask import redirect, session
-import sqlite3
+import os
 import yfinance as yf
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import scoped_session, sessionmaker
 
+# Use DATABASE_URL env var (set in Render). Fallback to the external Render URL for local dev.
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://finance_jmfn_user:dDvFG0bNmVLZsR7y0vdo4nq8VfEhr5MF@dpg-d2ipkmjuibrs73a4hg9g-a.oregon-postgres.render.com/finance_jmfn"
+)
 
-def get_db_connection():
-    conn = sqlite3.connect("finance.db", detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.row_factory = sqlite3.Row
-    return conn
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+db = scoped_session(sessionmaker(bind=engine))
+
+def get_db_session():
+    return db
+
+def close_db_session():
+    db.remove()
 
 def login_required(f):
     @wraps(f)
@@ -18,20 +29,14 @@ def login_required(f):
     return decorated_function
 
 def get_user_by_id(user_id):
-    conn = get_db_connection()
-    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    conn.close()
-    return user
+    s = get_db_session()
+    return s.execute(text("SELECT * FROM users WHERE id = :id"), {"id": user_id}).fetchone()
 
 def get_current_price(symbol):
-    """Return current market price for symbol or None on failure."""
     try:
         stock = yf.Ticker(symbol)
-        price = None
-        # primary: info dict
         info = getattr(stock, "info", {}) or {}
         price = info.get("regularMarketPrice") or info.get("previousClose")
-        # fallback: recent history
         if price is None:
             hist = stock.history(period="1d")
             if not hist.empty:
@@ -41,7 +46,6 @@ def get_current_price(symbol):
         return None
 
 def fetch_popular_stocks():
-    """Return list of (symbol, shortName) for common tickers."""
     symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NFLX", "NVDA", "META", "INTC", "ADBE"]
     dropdown_options = []
     for symbol in symbols:
@@ -54,3 +58,76 @@ def fetch_popular_stocks():
             pass
         dropdown_options.append((symbol, name))
     return dropdown_options
+
+# --- Auto-create tables on startup (idempotent) ---
+DDL = """
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS income (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  source TEXT,
+  amount DOUBLE PRECISION,
+  date DATE
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  category TEXT,
+  amount DOUBLE PRECISION,
+  date DATE
+);
+
+CREATE TABLE IF NOT EXISTS savings (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT,
+  amount DOUBLE PRECISION
+);
+
+CREATE TABLE IF NOT EXISTS stocks (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  ticker TEXT,
+  quantity DOUBLE PRECISION,
+  purchase_price DOUBLE PRECISION
+);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  ticker TEXT
+);
+
+CREATE TABLE IF NOT EXISTS debts (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  creditor TEXT,
+  amount DOUBLE PRECISION,
+  interest_rate DOUBLE PRECISION,
+  monthly_payment DOUBLE PRECISION,
+  due_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT,
+  amount DOUBLE PRECISION,
+  description TEXT,
+  date DATE
+);
+"""
+
+try:
+    with engine.begin() as conn:
+        conn.execute(text(DDL))
+except Exception:
+    # If startup can't connect (e.g. env var not set), don't crash import.
+    # Render will provide the DATABASE_URL at runtime; the DDL will run on next deploy/start.
+    pass
