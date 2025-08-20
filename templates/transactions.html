@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2>Transactions / Statement</h2>
+  <form method="post">
+    <select name="type">
+      <option value="income">Income</option>
+      <option value="expense">Expense</option>
+      <option value="transfer">Transfer</option>
+      <option value="other">Other</option>
+    </select>
+    <input name="amount" step="any" type="number" placeholder="Amount" required>
+    <input name="description" placeholder="Description">
+    <input name="date" type="date">
+    <button type="submit">Log</button>
+  </form>
+
+  <h3>Filter</h3>
+  <form method="get">
+    <input type="date" name="start">
+    <input type="date" name="end">
+    <button type="submit">Apply</button>
+  </form>
+
+  <table>
+    <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead>
+    <tbody>
+      {% for t in transactions %}
+        <tr>
+          <td>{{ t.date }}</td>
+          <td>{{ t.type }}</td>
+          <td>{{ t.amount }}</td>
+          <td>{{ t.description }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

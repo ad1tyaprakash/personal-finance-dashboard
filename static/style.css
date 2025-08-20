@@ -110,3 +110,37 @@ canvas {
   width: 100% !important;
   height: auto !important;
 }
+
+/* ===== Theme Variables ===== */
+:root{
+  --bg:#fff;
+  --fg:#111;
+  --card:#f6f6f6;
+  --accent:#4e79a7;
+}
+[data-theme="dark"]{
+  --bg:#0f1113;
+  --fg:#e6eef5;
+  --card:#121417;
+  --accent:#6aa3ff;
+}
+
+/* ===== Global Styles ===== */
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--fg);}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 1rem;background:var(--card)}
+.nav .brand a{color:var(--fg);text-decoration:none;font-weight:700}
+.nav .links a{margin-left:0.6rem;color:var(--fg);text-decoration:none}
+.container{padding:1rem;max-width:1100px;margin:0 auto}
+.row{display:flex;gap:1rem;flex-wrap:wrap}
+.card{background:var(--card);padding:1rem;border-radius:6px;flex:1;min-width:180px}
+table{width:100%;border-collapse:collapse;margin-top:0.5rem}
+table th,table td{border:1px solid rgba(0,0,0,0.08);padding:0.4rem;text-align:left}
+form input, form select, form button{margin:0.2rem 0;padding:0.4rem}
+.flashes{margin-bottom:0.8rem}
+.flash{padding:0.4rem;border-radius:4px;margin-bottom:0.3rem}
+.flash.success{background:#e6f4ea;color:#064c2a}
+.flash.danger{background:#fdecea;color:#611313}
+.flash.info{background:#eef6ff;color:#08306f}
+.flash.warning{background:#fff4e5;color:#6a4a00}
+#theme-toggle{margin-left:.5rem;padding:.2rem .5rem}

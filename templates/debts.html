@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2>Debts</h2>
+  <form method="post">
+    <input name="creditor" placeholder="Creditor" required>
+    <input name="amount" type="number" step="any" placeholder="Amount" required>
+    <input name="interest" step="any" placeholder="Interest %" >
+    <input name="monthly_payment" step="any" placeholder="Monthly payment">
+    <input name="due_date" type="date" placeholder="Due date">
+    <button type="submit">Add Debt</button>
+  </form>
+
+  <table>
+    <thead><tr><th>Creditor</th><th>Amount</th><th>Interest</th><th>Monthly</th><th>Due</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for d in debts %}
+        <tr>
+          <td>{{ d.creditor }}</td>
+          <td>{{ d.amount }}</td>
+          <td>{{ d.interest_rate }}</td>
+          <td>{{ d.monthly_payment }}</td>
+          <td>{{ d.due_date }}</td>
+          <td>
+            <form method="post" action="/debts/remove/{{ d.id }}">
+              <button type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

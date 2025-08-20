@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2>Watchlist</h2>
+  <form method="post">
+    <input name="ticker" placeholder="Ticker e.g. AAPL" required>
+    <button type="submit">Add</button>
+  </form>
+  <table>
+    <thead><tr><th>Ticker</th><th>Price</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for it in items %}
+        <tr>
+          <td>{{ it.ticker }}</td>
+          <td>{{ it.price }}</td>
+          <td>
+            <form method="post" action="/watchlist/remove/{{ it.id }}" style="display:inline">
+              <button type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -2,158 +2,62 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h2>Welcome, {{ username }}!</h2>
-
-  <!-- ===== Net Worth Summary ===== -->
-  <div class="row mt-4">
-    <div class="col-md-6">
-      <div class="alert alert-info">
-        <strong>Total Net Worth:</strong> ₹{{ total_net_worth }}
-      </div>
+  <h2>Dashboard</h2>
+  <div class="row">
+    <div class="card">
+      <h3>Net worth</h3>
+      <p>Stocks: ${{ net_worth }}<br>Savings: ${{ total_savings }}<br><strong>Total: ${{ total_net_worth }}</strong></p>
     </div>
-    <div class="col-md-6">
-      <div class="alert alert-warning">
-        <strong>Deficit (Income - Expenses):</strong> ₹{{ deficit }}
-      </div>
+    <div class="card">
+      <h3>Deficit / Surplus</h3>
+      <p>${{ deficit }}</p>
     </div>
   </div>
 
-  <!-- ===== Net Worth Pie Chart ===== -->
-  <div class="my-4">
-    <h4>Net Worth Breakdown</h4>
-    <div class="chart-container">
-      <canvas id="netWorthChart"></canvas>
-    </div>
-  </div>
+  <section>
+    <h3>Expense Breakdown</h3>
+    <canvas id="expenseChart" width="400" height="200"></canvas>
+  </section>
 
-  <!-- ===== Add Income Form ===== -->
-  <div class="card p-4 my-4">
-    <h4>Add Income</h4>
-    <form action="/add_income" method="post" class="row g-3">
-      <div class="col-md-4">
-        <input type="text" name="source" class="form-control" placeholder="Source" required>
-      </div>
-      <div class="col-md-3">
-        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount (₹)" required>
-      </div>
-      <div class="col-md-3">
-        <input type="date" name="date" class="form-control" required>
-      </div>
-      <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-success">Add Income</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- ===== Add Expense Form ===== -->
-  <div class="card p-4 my-4">
-    <h4>Add Expense</h4>
-    <form action="/add_expense" method="post" class="row g-3">
-      <div class="col-md-4">
-        <input type="text" name="category" class="form-control" placeholder="Category" required>
-      </div>
-      <div class="col-md-3">
-        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount (₹)" required>
-      </div>
-      <div class="col-md-3">
-        <input type="date" name="date" class="form-control" required>
-      </div>
-      <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-danger">Add Expense</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- ===== Add Savings Form ===== -->
-  <div class="card p-4 my-4">
-    <h4>Add Savings</h4>
-    <form action="/add_savings" method="post" class="row g-3">
-      <div class="col-md-4">
-        <select name="type" class="form-select" required>
-          <option value="">-- Select Type --</option>
-          <option value="Cash">Cash</option>
-          <option value="Property">Property</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount (₹)" required>
-      </div>
-      <div class="col-md-4 d-grid">
-        <button type="submit" class="btn btn-primary">Add Savings</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- ===== Expense Breakdown Chart ===== -->
-  <div class="my-5">
-    <h4>Expense Breakdown</h4>
-    <div class="chart-container">
-      <canvas id="expenseChart"></canvas>
-    </div>
-  </div>
-
-  <!-- ===== Stocks Section ===== -->
-  <h4 class="mt-5">Your Stocks</h4>
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Ticker</th>
-          <th>Quantity</th>
-          <th>Buy Price</th>
-          <th>Current Price</th>
-          <th>Current Value</th>
-          <th>Profit/Loss</th>
-        </tr>
-      </thead>
+  <section>
+    <h3>Your Stocks</h3>
+    <table>
+      <thead><tr><th>Ticker</th><th>Qty</th><th>Buy</th><th>Current</th><th>Value</th><th>Profit</th></tr></thead>
       <tbody>
-        {% for stock in stock_data %}
+      {% for s in stock_data %}
         <tr>
-          <td>{{ stock.ticker }}</td>
-          <td>{{ stock.quantity }}</td>
-          <td>{{ stock.purchase_price }}</td>
-          <td>{{ stock.current_price }}</td>
-          <td>{{ stock.current_value }}</td>
-          <td {% if stock.profit < 0 %} class="text-danger" {% else %} class="text-success" {% endif %}>
-            {{ stock.profit }}
-          </td>
+          <td>{{ s.ticker }}</td>
+          <td>{{ s.quantity }}</td>
+          <td>{{ s.purchase_price }}</td>
+          <td>{{ s.current_price }}</td>
+          <td>{{ s.current_value }}</td>
+          <td>{{ s.profit }}</td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
     </table>
-  </div>
 
-  <!-- ===== Add Stock Form ===== -->
-  <h4 class="mt-5">Add Stock</h4>
-  <form action="/add_stock" method="POST" class="row g-3 mb-5">
-    <div class="col-md-4">
-      <label for="ticker" class="form-label">Stock</label>
-      <select name="ticker" class="form-select" required>
-        {% for symbol, name in available_stocks %}
-        <option value="{{ symbol }}">{{ symbol }} - {{ name }}</option>
+    <h4>Add stock</h4>
+    <form action="/add_stock" method="post">
+      <select name="ticker">
+        {% for sym, name in available_stocks %}
+          <option value="{{ sym }}">{{ sym }} — {{ name }}</option>
         {% endfor %}
       </select>
-    </div>
-    <div class="col-md-3">
-      <label for="quantity" class="form-label">Quantity</label>
-      <input type="number" step="1" class="form-control" name="quantity" required>
-    </div>
-    <div class="col-md-3">
-      <label for="purchase_price" class="form-label">Buy Price</label>
-      <input type="number" step="0.01" class="form-control" name="purchase_price" required>
-    </div>
-    <div class="col-md-2 d-grid">
-      <label class="form-label invisible">Submit</label>
-      <button type="submit" class="btn btn-success">Add</button>
-    </div>
-  </form>
-</div>
+      <input name="quantity" type="number" step="any" placeholder="Quantity" required>
+      <input name="purchase_price" type="number" step="any" placeholder="Purchase price" required>
+      <button type="submit">Add</button>
+    </form>
+  </section>
 
-<!-- ===== Scripts ===== -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='chart.js') }}"></script>
-<script>
-  renderExpenseChart({{ labels | tojson }}, {{ data | tojson }});
-  renderNetWorthChart({{ net_worth }}, {{ total_savings }});
-</script>
+  <script>
+    const labels = {{ labels|tojson }};
+    const data = {{ data|tojson }};
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: { labels, datasets: [{ data, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f'] }] }
+    });
+  </script>
+</div>
 {% endblock %}
