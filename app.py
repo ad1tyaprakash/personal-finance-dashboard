@@ -22,7 +22,7 @@ def register():
             flash("Username and password are required!", "danger")
             return redirect("/register")
         s = get_db_session()
-        existing_user = s.execute(text("SELECT id FROM users WHERE username = :username"), {"username": username}).fetchone()
+        existing_user = s.execute(text("SELECT id FROM users WHERE username = :username"), {"username": username}).mappings().fetchone()
         if existing_user:
             flash("Username already exists.", "warning")
             return redirect("/register")
@@ -41,7 +41,7 @@ def login():
         username = request.form.get("username", "")
         password = request.form.get("password", "")
         s = get_db_session()
-        user = s.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
+        user = s.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).mappings().fetchone()
         if user is None or not check_password_hash(user["hash"], password):
             flash("Invalid username or password.", "danger")
             return redirect("/login")
@@ -61,17 +61,17 @@ def logout():
 @login_required
 def dashboard():
     s = get_db_session()
-    expenses = s.execute(text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"), {"uid": session["user_id"]}).fetchall()
+    expenses = s.execute(text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"), {"uid": session["user_id"]}).mappings().fetchall()
     labels = [row["category"] for row in expenses]
     data = [row["total"] for row in expenses]
 
-    total_income = s.execute(text("SELECT SUM(amount) FROM income WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
-    total_expense = s.execute(text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
+    total_income = s.execute(text("SELECT SUM(amount) FROM income WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
+    total_expense = s.execute(text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
     deficit = round(total_income - total_expense, 2)
 
-    total_savings = s.execute(text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchone()[0] or 0
+    total_savings = s.execute(text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
 
-    stocks = s.execute(text("SELECT * FROM stocks WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
+    stocks = s.execute(text("SELECT * FROM stocks WHERE user_id = :uid"), {"uid": session["user_id"]}).mappings().fetchall()
     total_stock_value = 0
     stock_data = []
     for stock in stocks:
@@ -116,7 +116,7 @@ def watchlist():
             s.commit()
             flash(f"Added {ticker} to watchlist", "success")
         return redirect("/watchlist")
-    items = s.execute(text("SELECT * FROM watchlist WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
+    items = s.execute(text("SELECT * FROM watchlist WHERE user_id = :uid"), {"uid": session["user_id"]}).mappings().fetchall()
     resolved = []
     for it in items:
         price = get_current_price(it["ticker"]) or "N/A"
@@ -148,7 +148,7 @@ def debts():
         s.commit()
         flash("Debt added.", "success")
         return redirect("/debts")
-    rows = s.execute(text("SELECT * FROM debts WHERE user_id = :uid"), {"uid": session["user_id"]}).fetchall()
+    rows = s.execute(text("SELECT * FROM debts WHERE user_id = :uid"), {"uid": session["user_id"]}).mappings().fetchall()
     return render_template("debts.html", debts=rows, active_page="debts")
 
 @app.route("/debts/remove/<int:debt_id>", methods=["POST"])
@@ -184,7 +184,7 @@ def transactions():
     if end:
         q += " AND date <= :end"; params["end"] = end
     q += " ORDER BY date DESC"
-    rows = s.execute(text(q), params).fetchall()
+    rows = s.execute(text(q), params).mappings().fetchall()
     return render_template("transactions.html", transactions=rows, active_page="transactions")
 
 # API: get price for ticker (ajax)
@@ -200,7 +200,7 @@ def api_price():
 @login_required
 def profile():
     s = get_db_session()
-    user = s.execute(text("SELECT id, username FROM users WHERE id = :id"), {"id": session["user_id"]}).fetchone()
+    user = s.execute(text("SELECT id, username FROM users WHERE id = :id"), {"id": session["user_id"]}).mappings().fetchone()
     if request.method == "POST":
         newname = request.form.get("username").strip()
         if newname:

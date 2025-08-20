@@ -30,9 +30,10 @@ def login_required(f):
 
 def get_user_by_id(user_id):
     s = get_db_session()
-    return s.execute(text("SELECT * FROM users WHERE id = :id"), {"id": user_id}).fetchone()
+    return s.execute(text("SELECT * FROM users WHERE id = :id"), {"id": user_id}).mappings().fetchone()
 
 def get_current_price(symbol):
+    """Return current market price for symbol or None on failure."""
     try:
         stock = yf.Ticker(symbol)
         info = getattr(stock, "info", {}) or {}
@@ -128,6 +129,5 @@ try:
     with engine.begin() as conn:
         conn.execute(text(DDL))
 except Exception:
-    # If startup can't connect (e.g. env var not set), don't crash import.
-    # Render will provide the DATABASE_URL at runtime; the DDL will run on next deploy/start.
+    # don't crash import if DB unavailable at import time (Render will provide DATABASE_URL at runtime)
     pass
