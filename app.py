@@ -62,7 +62,6 @@ def logout():
 def dashboard():
     s = get_db_session()
 
-    # expenses aggregated -> convert to native types
     expenses_rows = s.execute(
         text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"),
         {"uid": session["user_id"]}
@@ -99,10 +98,8 @@ def dashboard():
             "profit": profit
         })
 
-    # liabilities (debts)
     total_debts = s.execute(text("SELECT SUM(amount) FROM debts WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
 
-    # net worth breakdown (Assets vs Liabilities)
     assets = float(total_stock_value or 0) + float(total_savings or 0)
     liabilities = float(total_debts or 0)
     net_worth_value = round(assets - liabilities, 2)
