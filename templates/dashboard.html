@@ -81,7 +81,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Expense chart data
       const labels = {{ labels|tojson }};
       const data = {{ data|tojson }};
 
@@ -105,12 +104,15 @@
         });
       }
 
-      // Net worth chart data (Assets vs Liabilities)
       const labelsNet = {{ labels_net|tojson }};
       const dataNet = {{ data_net|tojson }};
 
       const noNetMsg = document.getElementById('no-networth-msg');
       const netCanvas = document.getElementById('netWorthChart');
+
+      // explicit distinct colors for Assets vs Liabilities
+      const netBackground = ['#2ca02c', '#d62728'];    // green, red
+      const netBorder = ['#1f7a1f', '#a11b1b'];
 
       if (!Array.isArray(labelsNet) || !Array.isArray(dataNet) || (dataNet.reduce((a,b)=>a+b,0) === 0)) {
         if (netCanvas) netCanvas.style.display = 'none';
@@ -125,7 +127,8 @@
             labels: labelsNet,
             datasets: [{
               data: numericNet,
-              backgroundColor: ['#59a14f', '#e15759'],
+              backgroundColor: netBackground,
+              borderColor: netBorder,
               borderWidth: 1
             }]
           },
