@@ -8,7 +8,6 @@
       <h3>Net worth</h3>
       <p>Stocks: ${{ net_worth }}<br>Savings: ${{ total_savings }}<br><strong>Total: ${{ total_net_worth }}</strong></p>
 
-      <!-- Add Income form -->
       <h4>Add Income</h4>
       <form action="/add_income" method="post" style="display:flex;flex-direction:column;gap:.3rem;">
         <input name="source" placeholder="Source (e.g., Salary)" required>
@@ -22,7 +21,6 @@
       <h3>Deficit / Surplus</h3>
       <p>${{ deficit }}</p>
 
-      <!-- Add Expense form -->
       <h4>Add Expense</h4>
       <form action="/add_expense" method="post" style="display:flex;flex-direction:column;gap:.3rem;">
         <input name="category" placeholder="Category (e.g., Food)" required>
