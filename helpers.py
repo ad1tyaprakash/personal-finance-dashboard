@@ -5,7 +5,6 @@ import yfinance as yf
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-# Use DATABASE_URL env var (set in Render). Fallback to the external Render URL for local dev.
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://finance_jmfn_user:dDvFG0bNmVLZsR7y0vdo4nq8VfEhr5MF@dpg-d2ipkmjuibrs73a4hg9g-a.oregon-postgres.render.com/finance_jmfn"
@@ -60,7 +59,6 @@ def fetch_popular_stocks():
         dropdown_options.append((symbol, name))
     return dropdown_options
 
-# --- Auto-create tables on startup (idempotent) ---
 DDL = """
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -129,5 +127,4 @@ try:
     with engine.begin() as conn:
         conn.execute(text(DDL))
 except Exception:
-    # don't crash import if DB unavailable at import time (Render will provide DATABASE_URL at runtime)
     pass
