@@ -103,7 +103,6 @@ def dashboard():
         active_page="dashboard"
     )
 
-# Watchlist routes
 @app.route("/watchlist", methods=["GET", "POST"])
 @login_required
 def watchlist():
@@ -132,7 +131,6 @@ def remove_watchlist(item_id):
     flash("Removed from watchlist", "info")
     return redirect("/watchlist")
 
-# Debts
 @app.route("/debts", methods=["GET", "POST"])
 @login_required
 def debts():
@@ -160,7 +158,6 @@ def remove_debt(debt_id):
     flash("Debt removed.", "info")
     return redirect("/debts")
 
-# Transactions and statements
 @app.route("/transactions", methods=["GET", "POST"])
 @login_required
 def transactions():
@@ -187,7 +184,6 @@ def transactions():
     rows = s.execute(text(q), params).mappings().fetchall()
     return render_template("transactions.html", transactions=rows, active_page="transactions")
 
-# API: get price for ticker (ajax)
 @app.route("/api/price")
 @login_required
 def api_price():
@@ -195,7 +191,6 @@ def api_price():
     price = get_current_price(ticker)
     return jsonify({"ticker": ticker, "price": price})
 
-# profile view/edit
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
