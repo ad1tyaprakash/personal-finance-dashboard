@@ -1,4 +1,3 @@
-// Function to render the Expense Breakdown Pie Chart
 function renderExpenseChart(labels, data) {
   const ctx = document.getElementById('expenseChart').getContext('2d');
   new Chart(ctx, {
@@ -30,7 +29,6 @@ function renderExpenseChart(labels, data) {
   });
 }
 
-// Function to render the Net Worth Breakdown Pie Chart
 function renderNetWorthChart(stockValue, savingsValue) {
   const ctx = document.getElementById('netWorthChart').getContext('2d');
   new Chart(ctx, {
