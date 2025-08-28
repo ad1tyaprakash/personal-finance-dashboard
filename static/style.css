@@ -1,10 +1,8 @@
-/* ===== Base Reset ===== */
 body {
   background-color: #f8f9fa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* ===== Navbar ===== */
 .navbar-brand strong {
   font-size: 1.3rem;
 }
@@ -18,13 +16,11 @@ body {
   transform: scale(1.03);
 }
 
-/* ===== White Card (Homepage Centerpiece) ===== */
 .card {
   border-radius: 1.25rem;
   background-color: #ffffff;
 }
 
-/* ===== Background Section Below Card ===== */
 .bg-section {
   height: 300px;
   background: url('/static/backg.jpg') no-repeat center center/cover;
@@ -44,7 +40,6 @@ body {
   text-align: center;
 }
 
-/* ===== Buttons ===== */
 .btn-lg {
   border-radius: 8px;
 }
@@ -64,12 +59,10 @@ body {
   opacity: 0.95;
 }
 
-/* ===== Flash messages (optional) ===== */
 .alert {
   margin-top: 1rem;
 }
 
-/* ===== Responsive tweaks ===== */
 @media (max-width: 576px) {
   .card {
     padding: 1.5rem;
@@ -90,7 +83,6 @@ body {
   }
 }
 
-/* ===== Optional Footer ===== */
 footer {
   padding: 1rem 0;
   background-color: #343a40;
@@ -99,7 +91,6 @@ footer {
   margin-top: 3rem;
 }
 
-/* ===== Chart Container Styling ===== */
 .chart-container {
   max-width: 480px;
   height: auto;
@@ -111,7 +102,6 @@ canvas {
   height: auto !important;
 }
 
-/* ===== Theme Variables ===== */
 :root{
   --bg:#fff;
   --fg:#111;
@@ -125,7 +115,6 @@ canvas {
   --accent:#6aa3ff;
 }
 
-/* ===== Global Styles ===== */
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--fg);}
 .nav{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 1rem;background:var(--card)}
