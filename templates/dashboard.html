@@ -53,11 +53,9 @@
     </form>
   </section>
 
-  <!-- Load Chart.js from CDN to ensure compatibility -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // labels/data are already converted to native types in app.py
       const labels = {{ labels|tojson }};
       const data = {{ data|tojson }};
 
@@ -65,17 +63,14 @@
       const canvas = document.getElementById('expenseChart');
 
       if (!Array.isArray(labels) || !Array.isArray(data) || data.length === 0) {
-        // show friendly message if no data
         if (canvas) canvas.style.display = 'none';
         if (noMsg) noMsg.style.display = 'block';
         return;
       }
 
-      // ensure all data are numbers
       const numeric = data.map(d => Number(d) || 0);
 
       const ctx = canvas.getContext('2d');
-      // destroy existing chart instance if any (avoid double-render on HMR)
       if (window.expenseChartInstance) {
         window.expenseChartInstance.destroy();
       }

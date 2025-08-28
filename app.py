@@ -62,7 +62,7 @@ def logout():
 def dashboard():
     s = get_db_session()
 
-    # expenses aggregated -> convert to native types (strings & floats) for JSON serialization
+    # expenses aggregated -> convert to native types
     expenses_rows = s.execute(
         text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"),
         {"uid": session["user_id"]}
@@ -71,18 +71,15 @@ def dashboard():
     data = [float(row["total"]) if row["total"] is not None else 0.0 for row in expenses_rows]
 
     total_income = s.execute(
-        text("SELECT SUM(amount) FROM income WHERE user_id = :uid"),
-        {"uid": session["user_id"]}
+        text("SELECT SUM(amount) FROM income WHERE user_id = :uid"), {"uid": session["user_id"]}
     ).scalar() or 0
     total_expense = s.execute(
-        text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"),
-        {"uid": session["user_id"]}
+        text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"), {"uid": session["user_id"]}
     ).scalar() or 0
     deficit = round(total_income - total_expense, 2)
 
     total_savings = s.execute(
-        text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"),
-        {"uid": session["user_id"]}
+        text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"), {"uid": session["user_id"]}
     ).scalar() or 0
 
     stocks = s.execute(text("SELECT * FROM stocks WHERE user_id = :uid"), {"uid": session["user_id"]}).mappings().fetchall()
@@ -116,6 +113,30 @@ def dashboard():
         deficit=deficit,
         active_page="dashboard"
     )
+
+@app.route("/add_stock", methods=["POST"])
+@login_required
+def add_stock():
+    s = get_db_session()
+    ticker = request.form.get("ticker", "").upper().strip()
+    try:
+        quantity = float(request.form.get("quantity", "0") or 0)
+    except ValueError:
+        quantity = 0
+    try:
+        purchase_price = float(request.form.get("purchase_price", "0") or 0)
+    except ValueError:
+        purchase_price = 0
+    if not ticker or quantity <= 0 or purchase_price < 0:
+        flash("Invalid stock input.", "danger")
+        return redirect("/dashboard")
+    s.execute(
+        text("INSERT INTO stocks (user_id, ticker, quantity, purchase_price) VALUES (:uid, :ticker, :qty, :price)"),
+        {"uid": session["user_id"], "ticker": ticker, "qty": quantity, "price": purchase_price}
+    )
+    s.commit()
+    flash(f"Added {ticker} ({quantity} @ {purchase_price})", "success")
+    return redirect("/dashboard")
 
 @app.route("/watchlist", methods=["GET", "POST"])
 @login_required
