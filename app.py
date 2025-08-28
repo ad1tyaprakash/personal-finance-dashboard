@@ -61,15 +61,29 @@ def logout():
 @login_required
 def dashboard():
     s = get_db_session()
-    expenses = s.execute(text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"), {"uid": session["user_id"]}).mappings().fetchall()
-    labels = [row["category"] for row in expenses]
-    data = [row["total"] for row in expenses]
 
-    total_income = s.execute(text("SELECT SUM(amount) FROM income WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
-    total_expense = s.execute(text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
+    # expenses aggregated -> convert to native types (strings & floats) for JSON serialization
+    expenses_rows = s.execute(
+        text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"),
+        {"uid": session["user_id"]}
+    ).mappings().fetchall()
+    labels = [str(row["category"] or "") for row in expenses_rows]
+    data = [float(row["total"]) if row["total"] is not None else 0.0 for row in expenses_rows]
+
+    total_income = s.execute(
+        text("SELECT SUM(amount) FROM income WHERE user_id = :uid"),
+        {"uid": session["user_id"]}
+    ).scalar() or 0
+    total_expense = s.execute(
+        text("SELECT SUM(amount) FROM expenses WHERE user_id = :uid"),
+        {"uid": session["user_id"]}
+    ).scalar() or 0
     deficit = round(total_income - total_expense, 2)
 
-    total_savings = s.execute(text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"), {"uid": session["user_id"]}).scalar() or 0
+    total_savings = s.execute(
+        text("SELECT SUM(amount) FROM savings WHERE user_id = :uid"),
+        {"uid": session["user_id"]}
+    ).scalar() or 0
 
     stocks = s.execute(text("SELECT * FROM stocks WHERE user_id = :uid"), {"uid": session["user_id"]}).mappings().fetchall()
     total_stock_value = 0

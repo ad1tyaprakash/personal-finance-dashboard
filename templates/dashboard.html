@@ -16,7 +16,10 @@
 
   <section>
     <h3>Expense Breakdown</h3>
-    <canvas id="expenseChart" width="400" height="200"></canvas>
+    <div class="chart-container">
+      <canvas id="expenseChart" width="400" height="200"></canvas>
+      <p id="no-expense-msg" style="display:none;">No expense data to show.</p>
+    </div>
   </section>
 
   <section>
@@ -50,13 +53,56 @@
     </form>
   </section>
 
+  <!-- Load Chart.js from CDN to ensure compatibility -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const labels = {{ labels|tojson }};
-    const data = {{ data|tojson }};
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'pie',
-      data: { labels, datasets: [{ data, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f'] }] }
+    document.addEventListener('DOMContentLoaded', function () {
+      // labels/data are already converted to native types in app.py
+      const labels = {{ labels|tojson }};
+      const data = {{ data|tojson }};
+
+      const noMsg = document.getElementById('no-expense-msg');
+      const canvas = document.getElementById('expenseChart');
+
+      if (!Array.isArray(labels) || !Array.isArray(data) || data.length === 0) {
+        // show friendly message if no data
+        if (canvas) canvas.style.display = 'none';
+        if (noMsg) noMsg.style.display = 'block';
+        return;
+      }
+
+      // ensure all data are numbers
+      const numeric = data.map(d => Number(d) || 0);
+
+      const ctx = canvas.getContext('2d');
+      // destroy existing chart instance if any (avoid double-render on HMR)
+      if (window.expenseChartInstance) {
+        window.expenseChartInstance.destroy();
+      }
+
+      const colors = [
+        '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+        '#edc949','#af7aa1','#ff9da7','#9c755f','#bab0ac'
+      ];
+
+      window.expenseChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: numeric,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right' }
+          }
+        }
+      });
     });
   </script>
 </div>
