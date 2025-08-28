@@ -1,4 +1,3 @@
-// simple theme toggle persisted in localStorage
 const toggle = document.getElementById('theme-toggle');
 function applyTheme(t){
   if(t === 'dark') document.documentElement.setAttribute('data-theme','dark');
@@ -14,7 +13,6 @@ if(toggle){
   });
 }
 
-// optional: fetch price for an input with api
 async function fetchPrice(ticker, el){
   try{
     const r = await fetch(`/api/price?ticker=${encodeURIComponent(ticker)}`);
