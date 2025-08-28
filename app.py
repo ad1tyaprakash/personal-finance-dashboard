@@ -62,7 +62,6 @@ def logout():
 def dashboard():
     s = get_db_session()
 
-    # expenses aggregated -> convert to native types
     expenses_rows = s.execute(
         text("SELECT category, SUM(amount) as total FROM expenses WHERE user_id = :uid GROUP BY category"),
         {"uid": session["user_id"]}
@@ -240,6 +239,48 @@ def profile():
             flash("Profile updated.", "success")
             return redirect("/profile")
     return render_template("profile.html", user=user, active_page="profile")
+
+@app.route("/add_income", methods=["POST"])
+@login_required
+def add_income():
+    s = get_db_session()
+    source = request.form.get("source", "").strip()
+    try:
+        amount = float(request.form.get("amount") or 0)
+    except ValueError:
+        amount = 0
+    date = request.form.get("date") or datetime.utcnow().strftime("%Y-%m-%d")
+    if not source or amount <= 0:
+        flash("Invalid income input.", "danger")
+        return redirect("/dashboard")
+    s.execute(
+        text("INSERT INTO income (user_id, source, amount, date) VALUES (:uid, :source, :amount, :date)"),
+        {"uid": session["user_id"], "source": source, "amount": amount, "date": date}
+    )
+    s.commit()
+    flash("Income added.", "success")
+    return redirect("/dashboard")
+
+@app.route("/add_expense", methods=["POST"])
+@login_required
+def add_expense():
+    s = get_db_session()
+    category = request.form.get("category", "").strip()
+    try:
+        amount = float(request.form.get("amount") or 0)
+    except ValueError:
+        amount = 0
+    date = request.form.get("date") or datetime.utcnow().strftime("%Y-%m-%d")
+    if not category or amount <= 0:
+        flash("Invalid expense input.", "danger")
+        return redirect("/dashboard")
+    s.execute(
+        text("INSERT INTO expenses (user_id, category, amount, date) VALUES (:uid, :category, :amount, :date)"),
+        {"uid": session["user_id"], "category": category, "amount": amount, "date": date}
+    )
+    s.commit()
+    flash("Expense added.", "success")
+    return redirect("/dashboard")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
